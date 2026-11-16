@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StudyShelf Project Report</title>
+<style>
+@page{size:A4;margin:16mm 15mm 17mm} :root{--ink:#242321;--muted:#6b6964;--line:#ddd8d0;--accent:#a94f39;--soft:#f4eee8;--green:#60765e}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.45}
+h1,h2,h3{font-family:Arial,Helvetica,sans-serif;color:var(--ink)}h1{font-size:30pt;line-height:1.05;margin:0 0 12px;letter-spacing:-.7px}
+h2{font-size:18pt;margin:0 0 12px;border-bottom:2px solid var(--accent);padding-bottom:6px}h3{font-size:12pt;margin:15px 0 6px;color:var(--accent)}
+p{margin:5px 0 9px}ul,ol{margin:5px 0 10px 19px;padding:0}li{margin:3px 0}
+code{font-family:Consolas,"Courier New",monospace;font-size:8.5pt;background:#f2f0ed;padding:1px 3px;border-radius:2px}
+pre{background:#272522;color:#f6f1eb;padding:10px 12px;border-radius:5px;font-size:8pt;line-height:1.35;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:8.8pt}th{text-align:left;background:var(--soft);color:#5f3d32;font-weight:bold}th,td{border:1px solid var(--line);padding:6px 7px;vertical-align:top}
+.cover{min-height:255mm;display:flex;flex-direction:column;justify-content:space-between;padding:18mm 5mm 8mm;page-break-after:always}
+.cover-top{color:var(--accent);font-size:10pt;font-weight:bold;letter-spacing:2px;text-transform:uppercase}.cover h1{margin-top:42mm;max-width:160mm}
+.subtitle{font-size:15pt;color:var(--muted);max-width:150mm}.cover-rule{width:58mm;height:5px;background:var(--accent);margin:22px 0}
+.cover-meta{color:var(--muted);font-size:9pt}.cover-card{background:var(--soft);border-left:5px solid var(--accent);padding:15px 17px;max-width:160mm}
+.section{page-break-before:always}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-size:8pt;font-weight:bold;margin-bottom:5px}
+.lead{font-size:12pt;color:#45413c}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0 14px}
+.card{border:1px solid var(--line);border-radius:5px;padding:10px}.card strong{display:block;font-size:11pt;margin-bottom:4px;color:var(--accent)}
+.metric{font-size:19pt;font-weight:bold;color:var(--accent)}.metric-label{color:var(--muted);font-size:8.5pt}
+.callout{background:#f8f5f0;border-left:4px solid var(--green);padding:9px 11px;margin:10px 0}.warn{border-left-color:#b27d42}
+.diagram{border:1px solid var(--line);background:#faf9f7;padding:12px;margin:10px 0;text-align:center;font-size:9pt}
+.flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}.flow span{background:var(--soft);border:1px solid #d8c6b8;padding:7px 8px;border-radius:4px}.arrow{color:var(--accent);font-weight:bold}
+.small{font-size:8.5pt;color:var(--muted)}.footer-note{margin-top:18px;padding-top:7px;border-top:1px solid var(--line);font-size:8pt;color:var(--muted)}
+</style>
+</head>
+<body>
+<section class="cover">
+<div><div class="cover-top">Software Project Report</div><h1>StudyShelf</h1>
+<div class="subtitle">A local-first exam preparation workspace for faculty PDFs, grounded answers, exam responses, and source-backed quizzes.</div>
+<div class="cover-rule"></div><div class="cover-card"><strong>Project character</strong><br>StudyShelf combines local document storage, CPU-based semantic indexing, and an API-only cloud generation layer. The result is a focused personal study environment in which uploaded course material remains on the user's device.</div></div>
+<div class="cover-meta"><div><strong>Repository:</strong> RAG / StudyShelf</div><div><strong>Scope:</strong> Implemented features, architecture, interfaces, operations, testing, security, and limitations</div></div>
+</section>
+
+<section class="section"><div class="eyebrow">01 · Overview</div><h2>Executive summary</h2>
+<p class="lead">StudyShelf is a local-first Retrieval-Augmented Generation (RAG) application designed for exam preparation. It accepts selectable-text PDFs, extracts and chunks their content, creates local semantic embeddings, stores vectors in a persistent ChromaDB collection, and retrieves relevant passages for answer and quiz generation.</p>
+<p>The web interface is a React/Vite single-page application. The backend is a FastAPI service that owns file handling, indexing, retrieval, model calls, validation, and source citation. The OpenAI API is used only from the backend for generated responses; the local embedding model runs on CPU.</p>
+<div class="grid">
+<div class="card"><span class="metric">6</span><span class="metric-label">primary study/library surfaces</span><p>Dashboard, PDF Library, Ask your PDFs, Exam answers, Quiz generator, Settings.</p></div>
+<div class="card"><span class="metric">8</span><span class="metric-label">document and study API operations</span><p>Health, list/upload/delete/update/file, chat, exam answer, and quiz generation.</p></div>
+<div class="card"><span class="metric">2</span><span class="metric-label">persistence layers</span><p>PDF originals plus JSON manifest, and persistent ChromaDB vectors.</p></div>
+<div class="card"><span class="metric">3</span><span class="metric-label">validated study outputs</span><p>Grounded chat answers, mark-sized exam answers, and four-option MCQ quizzes.</p></div>
+</div>
+<h3>Primary value proposition</h3><ul><li>Turn scattered faculty notes into a searchable personal study library.</li><li>Answer questions from retrieved course excerpts instead of unsupported general knowledge.</li><li>Use source IDs and page metadata to trace generated claims to the original PDF.</li><li>Generate exam-ready answers with 2-, 5-, and 10-mark response formats.</li><li>Practice with validated multiple-choice quizzes and explanations.</li></ul>
+<div class="callout"><strong>Design boundary:</strong> upload and indexing are intended to be local operations. Generation requires a configured OpenAI API key and network access, but the key is never sent to the frontend.</div>
+</section>
+
+<section class="section"><div class="eyebrow">02 · Product scope</div><h2>Feature inventory</h2>
+<table><tr><th>Area</th><th>Implemented capability</th><th>User outcome</th></tr>
+<tr><td>Dashboard</td><td>Workspace overview, document count, recent materials, quick actions, model/configuration state.</td><td>See the state of the study space at a glance.</td></tr>
+<tr><td>PDF Library</td><td>Upload PDFs, classify by subject/semester/unit/type, search by filename, filter by subject and unit, open originals, reclassify, delete.</td><td>Maintain an organized, browsable course library.</td></tr>
+<tr><td>Indexing</td><td>Validate PDF signature, extract page text, reject encrypted/empty/scanned-only files, chunk with overlap, embed locally, upsert into ChromaDB.</td><td>Make course notes semantically searchable.</td></tr>
+<tr><td>Ask your PDFs</td><td>Question answering over top-k retrieved passages with source previews, page numbers, and source IDs.</td><td>Get a focused, traceable answer from uploaded material.</td></tr>
+<tr><td>Exam answers</td><td>2-, 5-, and 10-mark response modes using the same retrieval and evidence pipeline.</td><td>Match answer depth to expected marks.</td></tr>
+<tr><td>Quiz generator</td><td>Topic, count, difficulty, subject/unit filters; exactly four options; correct answer, explanation, and source ID.</td><td>Generate source-backed practice questions.</td></tr>
+<tr><td>Settings/status</td><td>Shows whether cloud generation is configured and explains where the key is configured.</td><td>Understand readiness without exposing secrets.</td></tr>
+<tr><td>Responsive UX</td><td>Sidebar navigation, mobile menu, alerts, toasts, loading states, inline filters, PDF links, responsive layout.</td><td>Use the workspace comfortably across viewport sizes.</td></tr></table>
+<h3>Supported document metadata</h3><p>Each PDF can carry optional <code>subject</code>, <code>semester</code>, <code>unit</code>, and <code>document_type</code> metadata. These values are stored in the manifest and copied to vector metadata so filters affect retrieval as well as library presentation.</p>
+</section>
+
+<section class="section"><div class="eyebrow">03 · Architecture</div><h2>System architecture and data flow</h2>
+<div class="diagram"><div class="flow"><span>React/Vite UI<br><small>127.0.0.1:5173</small></span><b class="arrow">→</b><span>FastAPI API<br><small>127.0.0.1:8000</small></span><b class="arrow">→</b><span>Services<br><small>PDF · chunks · retrieval · LLM</small></span></div><p class="small">Persistent local state: <code>data/uploads/</code> and <code>data/chroma/</code></p></div>
+<h3>Ingestion path</h3><ol><li>The frontend submits a multipart PDF and optional classification fields.</li><li>The API checks the extension, applies the configurable maximum upload size, and passes bytes to the document service.</li><li>PyMuPDF extracts text page by page while preserving 1-based page numbers. Encrypted, empty, invalid, and non-selectable-text PDFs are rejected with actionable errors.</li><li>The chunking service splits page text by words using configurable <code>CHUNK_SIZE</code> and <code>CHUNK_OVERLAP</code>.</li><li>A SHA-256 content hash detects duplicate PDFs before another index is created.</li><li><code>sentence-transformers/all-MiniLM-L6-v2</code> embeds chunks on CPU with normalized vectors.</li><li>ChromaDB persists chunk IDs, text, embeddings, page metadata, and classification metadata. The original PDF and manifest entry are then saved.</li></ol>
+<h3>Question and generation path</h3><ol><li>A question/topic is validated by Pydantic and optionally scoped by subject and unit.</li><li>The query is embedded locally and used to retrieve the configured top-k passages from ChromaDB.</li><li>Retrieved passages become numbered evidence blocks such as <code>[S1]</code>, with filename and page context.</li><li>The backend sends instructions and evidence to the OpenAI Responses API. The prompt treats excerpts as untrusted data and requires evidence-only answers.</li><li>Citations are normalized to allowed source IDs. Unknown source IDs and fabricated page details are removed.</li><li>The API returns the generated answer/questions plus structured source objects for the UI.</li></ol>
+</section>
+
+<section class="section"><div class="eyebrow">04 · Backend</div><h2>Backend components</h2>
+<table><tr><th>Component</th><th>Responsibility</th><th>Notable behavior</th></tr>
+<tr><td><code>app.main</code></td><td>FastAPI application composition.</td><td>Registers routers, local CORS origins, version metadata, and health endpoint.</td></tr>
+<tr><td><code>api.documents</code></td><td>Library and file endpoints.</td><td>Validates upload type/size, maps expected failures to 4xx responses, hides implementation details on indexing failure.</td></tr>
+<tr><td><code>api.chat</code></td><td>Chat and exam-answer endpoints.</td><td>Shares one retrieval/generation runner and returns normalized source data.</td></tr>
+<tr><td><code>api.quizzes</code></td><td>Quiz generation endpoint.</td><td>Retrieves topic context and enforces the response schema through Pydantic.</td></tr>
+<tr><td><code>document_service</code></td><td>Manifest, file, hash, and indexing orchestration.</td><td>Uses atomic manifest replacement; deletes vectors and stored PDF together.</td></tr>
+<tr><td><code>pdf_service</code></td><td>Page-aware text extraction.</td><td>Rejects password-protected and scanned-only documents.</td></tr>
+<tr><td><code>chunking_service</code></td><td>Word-based overlapping chunk generation.</td><td>Handles empty input and avoids trailing duplicate chunks.</td></tr>
+<tr><td><code>embedding_service</code></td><td>Local embedding model lifecycle.</td><td>Lazy-loads and caches a CPU SentenceTransformer model.</td></tr>
+<tr><td><code>vector_store</code></td><td>ChromaDB persistence and search.</td><td>Supports upsert, deletion, metadata updates, cosine search, and subject/unit filters.</td></tr>
+<tr><td><code>llm_service</code></td><td>OpenAI generation and output safety.</td><td>Bounded timeout/retry, clear configuration errors, evidence-only prompt, citation cleanup, strict quiz JSON validation.</td></tr></table>
+<h3>Configuration surface</h3><table><tr><th>Setting</th><th>Default</th><th>Purpose</th></tr>
+<tr><td><code>OPENAI_API_KEY</code></td><td>empty</td><td>Enables cloud answer and quiz generation; never returned by health.</td></tr>
+<tr><td><code>OPENAI_MODEL</code></td><td><code>gpt-4.1-mini</code></td><td>OpenAI Responses API model.</td></tr>
+<tr><td><code>EMBEDDING_MODEL</code></td><td><code>sentence-transformers/all-MiniLM-L6-v2</code></td><td>Local CPU semantic embedding model.</td></tr>
+<tr><td><code>TOP_K</code></td><td>5</td><td>Retrieved passage limit, clamped to 1–20.</td></tr>
+<tr><td><code>CHUNK_SIZE</code> / <code>CHUNK_OVERLAP</code></td><td>900 / 140</td><td>Word chunking parameters.</td></tr>
+<tr><td><code>MAX_UPLOAD_MB</code></td><td>25</td><td>Upload size limit.</td></tr>
+<tr><td><code>CHROMA_PATH</code> / <code>UPLOAD_DIR</code></td><td>local data paths</td><td>Persistent index and original PDF locations.</td></tr></table>
+</section>
+
+<section class="section"><div class="eyebrow">05 · API</div><h2>HTTP interface</h2>
+<table><tr><th>Method and path</th><th>Input</th><th>Output / behavior</th></tr>
+<tr><td><code>GET /api/health</code></td><td>None</td><td>Status, model name, LLM configured flag, document count.</td></tr>
+<tr><td><code>GET /api/documents</code></td><td>None</td><td>Public document manifest fields.</td></tr>
+<tr><td><code>POST /api/documents/upload</code></td><td>Multipart PDF plus optional metadata.</td><td>Indexed document summary and duplicate flag; 415/413/422/503 on expected failures.</td></tr>
+<tr><td><code>DELETE /api/documents/{id}</code></td><td>Document ID.</td><td>Deletes ChromaDB vectors, stored PDF, and manifest record.</td></tr>
+<tr><td><code>PATCH /api/documents/{id}/metadata</code></td><td>JSON metadata fields.</td><td>Updates manifest and vector metadata.</td></tr>
+<tr><td><code>GET /api/documents/{id}/file</code></td><td>Document ID</td><td>Streams the stored PDF inline for page navigation.</td></tr>
+<tr><td><code>POST /api/chat</code></td><td>Question, optional filters/top_k.</td><td>Grounded answer and sources.</td></tr>
+<tr><td><code>POST /api/exam-answer</code></td><td>Question, marks 2/5/10, optional filters.</td><td>Mark-calibrated answer and sources.</td></tr>
+<tr><td><code>POST /api/quiz/generate</code></td><td>Topic, count 1–15, difficulty, optional filters.</td><td>Validated MCQs and sources.</td></tr></table>
+<h3>Validation and response guarantees</h3><ul><li>Questions and topics have minimum and maximum lengths.</li><li>Top-k is bounded to 1–20; quiz count is bounded to 1–15.</li><li>Exam marks are a closed set: 2, 5, or 10.</li><li>Quiz questions require exactly four non-empty options and a correct index from 0 to 3.</li><li>Unknown citation IDs are removed rather than presented as trusted references.</li></ul>
+<h3>Example request</h3><pre>curl -X POST http://127.0.0.1:8000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Explain AVL tree balancing","subject":"Data Structures","unit":"Unit 3"}'</pre>
+</section>
+
+<section class="section"><div class="eyebrow">06 · Frontend</div><h2>User experience and interaction model</h2>
+<p>The frontend is a compact React 19 application bundled by Vite. Its visual system uses a warm neutral canvas, terracotta accent, compact typography, icon-based navigation, cards, and responsive sidebar behavior. API calls are centralized through a small request helper that converts non-2xx responses into visible error messages.</p>
+<table><tr><th>Screen</th><th>Interaction details</th></tr><tr><td>Dashboard</td><td>Displays library summary, health/model state, recent documents, and shortcuts into upload, question answering, and quiz creation.</td></tr>
+<tr><td>PDF Library</td><td>Searches filenames, filters subjects/units, opens PDFs in a new tab, exposes metadata controls, confirms deletion, and reports duplicate/indexing results.</td></tr>
+<tr><td>Ask your PDFs</td><td>Submits a question, shows generated answer, source previews, page references, and recent interaction history.</td></tr>
+<tr><td>Exam answers</td><td>Reuses the question workflow while exposing a marks selector for the 2/5/10 response contract.</td></tr>
+<tr><td>Quiz generator</td><td>Accepts topic/count/difficulty, displays options, allows answer selection, checks answers, and shows score/explanations/source pages.</td></tr>
+<tr><td>Settings</td><td>Explains local storage and API-key configuration state without showing the secret.</td></tr></table>
+<h3>State and failure handling</h3><ul><li>Initial loading state and periodic refresh keep the library count and health indicator current.</li><li>Busy states guard actions while upload, chat, exam, or quiz requests are running.</li><li>Errors appear in a dismissible alert; successful upload/delete actions use transient toast feedback.</li><li>Mobile navigation opens as an overlay with a scrim and close control.</li><li>Source links target the original stored PDF and include a page anchor.</li></ul>
+</section>
+
+<section class="section"><div class="eyebrow">07 · Quality</div><h2>Testing and verification</h2>
+<h3>Automated coverage present in the repository</h3><table><tr><th>Test area</th><th>Verified behavior</th></tr>
+<tr><td>API health</td><td>Health reports configuration state without leaking the API key value.</td></tr><tr><td>Upload validation</td><td>Non-PDF uploads are rejected with HTTP 415 and no indexing.</td></tr><tr><td>Request validation</td><td>Invalid exam mark values return validation errors.</td></tr><tr><td>PDF extraction</td><td>Two-page synthetic PDFs preserve page numbering and text; invalid/empty PDFs fail clearly.</td></tr><tr><td>Chunking</td><td>Overlap behavior and empty-input behavior are tested.</td></tr><tr><td>Quiz schema</td><td>Exactly four options and a valid correct index are enforced.</td></tr><tr><td>Retrieval mapping</td><td>Vector metadata is converted into stable source IDs, filenames, and pages.</td></tr><tr><td>LLM safety behavior</td><td>Unknown citations are removed; empty retrieval avoids calling the LLM.</td></tr></table>
+<h3>Recorded environment verification</h3><div class="callout warn">The repository README records that frontend installation and <code>npm run build</code> passed in the supplied workspace. Python compilation, direct chunking checks, and PDF text validation also passed. Backend dependency installation, pytest execution, backend startup, and end-to-end checks were blocked by unavailable package/network dependencies and sandbox bind restrictions; these should be rerun in a network-enabled environment with Python 3.11 or 3.12.</div>
+<h3>Recommended release gate</h3><ol><li>Create a Python 3.11 or 3.12 virtual environment and install the pinned backend requirements.</li><li>Run <code>backend/.venv/bin/python -m pytest backend/tests -q</code>.</li><li>Run <code>cd frontend &amp;&amp; npm run build</code>.</li><li>Start both services and perform the documented synthetic PDF upload, filtered question, exam answer, quiz, metadata update, and deletion smoke checks.</li></ol>
+</section>
+
+<section class="section"><div class="eyebrow">08 · Trust and operations</div><h2>Security, privacy, and data management</h2>
+<h3>Implemented safeguards</h3><ul><li>Both development servers bind to loopback addresses by default.</li><li>CORS is limited to the local Vite origins.</li><li>OpenAI credentials remain backend-only and the health endpoint exposes only a boolean configured state.</li><li>Uploaded filenames are normalized to a stored UUID-based filename; user filenames are not used as filesystem paths.</li><li>Upload size is bounded and PDF type is checked before indexing.</li><li>Evidence excerpts are explicitly treated as untrusted prompt data to reduce instruction injection from document text.</li><li>Model requests use a 45-second timeout and one retry, with user-safe error messages.</li><li>Generated data directories are ignored by Git; secrets and virtual environments are also ignored.</li></ul>
+<h3>Backup and recovery</h3><p>For a consistent backup, stop the application and copy both <code>data/uploads/</code> and <code>data/chroma/</code>. The upload directory contains the original PDFs and a small <code>documents.json</code> manifest; the ChromaDB directory contains the persistent semantic index.</p>
+<h3>Operational startup</h3><pre>python3 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -r backend/requirements.txt
+cd frontend &amp;&amp; npm install &amp;&amp; cd ..
+cp backend/.env.example backend/.env
+# set OPENAI_API_KEY in backend/.env
+./scripts/start.sh</pre><p class="small">Manual alternative: start Uvicorn on port 8000 and Vite on port 5173. API documentation is available at <code>http://127.0.0.1:8000/docs</code>.</p>
+</section>
+
+<section class="section"><div class="eyebrow">09 · Roadmap</div><h2>Limitations and future enhancements</h2>
+<table><tr><th>Current limitation</th><th>Impact</th><th>Potential enhancement</th></tr>
+<tr><td>OCR is not included.</td><td>Scanned/image-only PDFs cannot be indexed.</td><td>Add optional local OCR with clear quality/status reporting.</td></tr><tr><td>No authentication or multi-user support.</td><td>Designed for a trusted local personal workspace, not a shared deployment.</td><td>Add accounts, authorization, tenant isolation, and encrypted secret management.</td></tr><tr><td>Generation depends on OpenAI network/API access.</td><td>Questions and quizzes cannot be generated offline.</td><td>Support an optional local generation model or provider abstraction.</td></tr><tr><td>Chunking is word-based.</td><td>Section/heading/table boundaries are not explicitly preserved.</td><td>Add structure-aware chunking, tables, headings, and semantic reranking.</td></tr><tr><td>No remote deployment profile.</td><td>Local bind/CORS assumptions are not production hosting configuration.</td><td>Add deployment documentation, reverse proxy, TLS, observability, and backups.</td></tr><tr><td>Manifest is a JSON file.</td><td>Suitable for a single-user workspace; concurrent writes are limited.</td><td>Use SQLite or another transactional metadata store if concurrency grows.</td></tr><tr><td>Limited evaluation telemetry.</td><td>Retrieval quality and answer faithfulness are not measured automatically.</td><td>Add benchmark questions, retrieval recall, citation correctness, latency, and cost metrics.</td></tr></table>
+<h3>Prioritized next steps</h3><ol><li><strong>Release confidence:</strong> complete backend dependency installation and full test/smoke execution in a supported Python environment.</li><li><strong>Document coverage:</strong> add OCR and structure-aware extraction for real-world course materials.</li><li><strong>Answer quality:</strong> add retrieval thresholds, reranking, and a small grounded-answer evaluation set.</li><li><strong>Deployment readiness:</strong> add authentication, secure configuration, production CORS/TLS, logging, and backup automation.</li><li><strong>Performance:</strong> measure indexing time, embedding memory, retrieval latency, and generation latency as the library grows.</li></ol>
+</section>
+
+<section class="section"><div class="eyebrow">10 · Reference</div><h2>Repository map</h2>
+<table><tr><th>Path</th><th>Role</th></tr><tr><td><code>backend/app/main.py</code></td><td>FastAPI app, CORS, router registration, health.</td></tr><tr><td><code>backend/app/api/</code></td><td>Document, study, and quiz HTTP routes.</td></tr><tr><td><code>backend/app/services/</code></td><td>PDF extraction, chunking, embeddings, ChromaDB, retrieval, document lifecycle, and LLM integration.</td></tr><tr><td><code>backend/app/schemas.py</code></td><td>Request and response contracts with validation.</td></tr><tr><td><code>backend/tests/</code></td><td>API, core, extraction, chunking, retrieval, citation, and schema tests.</td></tr><tr><td><code>frontend/src/App.jsx</code></td><td>React application screens, state, API calls, and interactions.</td></tr><tr><td><code>frontend/src/styles.css</code></td><td>Visual design system and responsive layout.</td></tr><tr><td><code>scripts/start.sh</code></td><td>Local two-process startup helper with cleanup.</td></tr><tr><td><code>README.md</code></td><td>Prerequisites, installation, usage, API list, tests, troubleshooting, backup, security, and limitations.</td></tr></table>
+<div class="callout"><strong>Overall assessment:</strong> StudyShelf has a clear and coherent MVP architecture for personal, source-grounded study. Its strongest qualities are the separation between local document intelligence and backend-only generation, page-aware source traceability, explicit validation, and a focused UI. The next maturity step is operational verification and hardening for broader document types and non-local deployment.</div>
+<div class="footer-note">Prepared from the implemented source tree and project README.</div>
+</section>
+</body>
+</html>
